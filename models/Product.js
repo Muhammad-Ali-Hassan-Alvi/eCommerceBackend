@@ -51,14 +51,14 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
     discountType: {
-        type: String,
-        enum: ["upto", "flat", "none"],
-        default: "none"
+      type: String,
+      enum: ["upto", "flat", "none"],
+      default: "none",
     },
     discountRate: {
-        type: Number,
-        default: 0
-    }
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

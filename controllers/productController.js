@@ -42,7 +42,7 @@ export const createProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({ deletedAt: null }).sort({
+    const products = await Product.find({ isActive: null }).sort({
       createdAt: -1,
     });
 
@@ -172,3 +172,129 @@ export const updateProducts = async (req, res) => {
       .json({ message: "Internal Server Error", data: error.message });
   }
 };
+
+export const deactivateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndUpdate(
+      { id, deactivatedAt: new Date(), isActive: false },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not Found..." });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Product DeActivated Successfully...", data: product });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", data: error.message });
+  }
+};
+
+export const deleteProductPermanently = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndDelete({ id });
+
+    if (!product) {
+      return res.status(400).json({
+        message: "Product Not Found...",
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Product Deleted Successfully...", data: product });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Server...", data: error.message });
+  }
+};
+
+export const getDeactivatedProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: false });
+
+    if (!products) {
+      return res.status(404).json({ message: "No De-Activated Product...." });
+    }
+
+    return res.status(200).json({
+      message: "De-Activated Products Found Successfully....",
+      data: products,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Interval Server Error", data: error.message });
+  }
+};
+
+export const activeProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndUpdate({ id, isActive: true });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not Found..." });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Product Activated Successfully...", data: product });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", data: error.message });
+  }
+};
+
+export const addUptoDiscount = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { discountType, discountRate } = req.body;
+
+    if (discountType === "flat") {
+      return res.status(400).json({ message: "Wrong information entered..." });
+    }
+
+    if ((!discountType, !discountRate)) {
+      return res
+        .status(400)
+        .json({ message: "Please provide Discount Type and Amount..." });
+    }
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { discountType, discountRate },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not Found..." });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Discount Added Successfully...", data: product });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error...", data: error.message });
+  }
+};
+
+
+
+// Update for Tomorrow (INSHALLAH):
+// 1. Create a Global Discount for the Flat sales...
+// 2. Change the API for the getAllProducts and the getProductByID api to accomodate Global Discount (Flat off) -> Update the Price to get the Global Price first if there is any.... 
