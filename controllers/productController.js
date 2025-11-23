@@ -388,11 +388,12 @@ export const updateFlatDiscount = async (req, res) => {
 export const activateDeactivateDiscount = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isActive } =
-      req.body;
+    const { isActive } = req.body;
 
     if (!isActive) {
-      return res.status(400).json({ message: "Please enter all required Fields..."})
+      return res
+        .status(400)
+        .json({ message: "Please enter all required Fields..." });
     }
     const updatedFlatDiscount = await GlobalDiscount.findByIdAndUpdate(
       id,
@@ -419,7 +420,6 @@ export const activateDeactivateDiscount = async (req, res) => {
       .json({ message: "Internal Server Error...", data: error.message });
   }
 };
-
 
 export const removeFlatDiscount = async (req, res) => {
   try {

@@ -23,5 +23,4 @@ router.post("/refresh", protect, refreshAccessToken);
 router.patch("/update", protect, updateUserProfile);
 router.delete("/delete", protect, deleteProfile);
 
-
-export default router
+export default router;
