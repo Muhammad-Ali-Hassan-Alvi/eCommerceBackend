@@ -1,5 +1,5 @@
 import express from "express";
-import { authorizeRoles, protect } from "../middlewares/authMiddleware";
+import { protect, authorizeRoles } from "../middlewares/authMiddleware.js";
 import {
   createProduct,
   getAllProducts,
@@ -7,7 +7,6 @@ import {
   getFeaturedProduct,
   getLatestProducts,
   getProductByCategory,
-  getLatestProducts,
   updateProducts,
   deactivateProduct,
   deleteProductPermanently,
@@ -18,15 +17,16 @@ import {
   updateFlatDiscount,
   activateDeactivateDiscount,
   removeFlatDiscount,
-} from "../controllers/productController";
-import { upload } from "../config/cloudinary";
+  createUpdateFeaturedProduct,
+} from "../controllers/productController.js";
+import { upload } from "../config/cloudinary.js";
 
 const router = express.Router();
 
 router.get("/", getAllProducts);
-router.get("/:id", getProductById);
+router.get("/id/:id", getProductById);
 router.get("/featured-product", getFeaturedProduct);
-router.get("/:category", getProductByCategory);
+router.get("/category/:category", getProductByCategory);
 router.get("/latest-product", getLatestProducts);
 router.get(
   "/deactivated-products",
@@ -42,7 +42,7 @@ router.post(
   upload.array("images"),
   createProduct
 );
-router.post("/add-discount", protect, authorizeRoles("admin"), addUptoDiscount);
+router.post("/add-discount/:id", protect, authorizeRoles("admin"), addUptoDiscount);
 router.post(
   "/flat-discount",
   protect,
@@ -69,6 +69,12 @@ router.put(
   protect,
   authorizeRoles("admin"),
   updateFlatDiscount
+);
+router.put(
+  "/add-feature-product/:id",
+  protect,
+  authorizeRoles("admin"),
+  createUpdateFeaturedProduct
 );
 
 router.delete(

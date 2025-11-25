@@ -45,12 +45,12 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const authorizeRoles = (...roles) => {
+export const authorizeRoles = (...userType) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!userType.includes(req.user.userType)) {
       return res
         .status(403)
-        .json({ message: `Access denied, only [${roles.join(", ")}] allowed` });
+        .json({ message: `Access denied, only [${userType.join(", ")}] allowed` });
     }
 
     next();

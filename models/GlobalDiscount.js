@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const globalDiscountSchema = mongoose.Schema(
   {
-    discounType: {
+    discountType: {
       type: String,
       enum: ["PERCENTAGE"],
       default: "PERCENTAGE",
@@ -19,7 +19,8 @@ const globalDiscountSchema = mongoose.Schema(
       default: "ALL_PRODUCTS",
     },
     expiresAt: {
-      Date,
+      type: Date,
+      required: true,
     },
   },
   {

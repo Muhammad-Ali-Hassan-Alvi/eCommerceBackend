@@ -1,5 +1,5 @@
-import GlobalDiscount from "../models/GlobalDiscount";
-import Product from "../models/Product";
+import GlobalDiscount from "../models/GlobalDiscount.js";
+import Product from "../models/Product.js";
 import { applyDiscount } from "../utils/applyDiscount.js";
 
 export const createProduct = async (req, res) => {
@@ -115,6 +115,32 @@ export const getFeaturedProduct = async (req, res) => {
       message: "Internal Server Error...",
       data: error.message,
     });
+  }
+};
+
+export const createUpdateFeaturedProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFeatured } = req?.body;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { isFeatured },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Unable to find Product..." });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Product Added to Featured List...." });
+  } catch (error) {
+    console.error(error.message);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", data: error.message });
   }
 };
 
@@ -252,6 +278,9 @@ export const getDeactivatedProducts = async (req, res) => {
       return res.status(404).json({ message: "No De-Activated Product...." });
     }
 
+    if (products.length === 0) {
+      return res.status(200).json({ message: "There is no de-activated product...." });
+    }
     return res.status(200).json({
       message: "De-Activated Products Found Successfully....",
       data: products,
