@@ -1,6 +1,9 @@
 import GlobalDiscount from "../models/GlobalDiscount.js";
 import Product from "../models/Product.js";
-import { applyDiscount } from "../utils/applyDiscount.js";
+import {
+  applyDiscount,
+  invalidateGlobalDiscountCache,
+} from "../utils/applyDiscount.js";
 
 export const createProduct = async (req, res) => {
   try {
@@ -279,7 +282,9 @@ export const getDeactivatedProducts = async (req, res) => {
     }
 
     if (products.length === 0) {
-      return res.status(200).json({ message: "There is no de-activated product...." });
+      return res
+        .status(200)
+        .json({ message: "There is no de-activated product...." });
     }
     return res.status(200).json({
       message: "De-Activated Products Found Successfully....",
@@ -293,18 +298,36 @@ export const getDeactivatedProducts = async (req, res) => {
   }
 };
 
-export const activeProduct = async (req, res) => {
+export const activeDeactiveProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findByIdAndUpdate({ id, isActive: true });
+    const { isActive } = req.body;
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not Found..." });
+    if (isActive === undefined || isActive === null) {
+      return res
+        .status(400)
+        .json({ message: "Please provide the required field isActive..." });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Product Activated Successfully...", data: product });
+    const updateFields = {
+      isActive,
+      deactivatedAt: isActive ? null : new Date(),
+    };
+
+    const product = await Product.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found..." });
+    }
+
+    return res.status(200).json({
+      message: `Product has been ${
+        isActive ? "activated" : "deactivated"
+      } successfully...`,
+      data: product,
+    });
   } catch (error) {
     console.error(error);
     return res
@@ -366,6 +389,9 @@ export const createFlatDiscounts = async (req, res) => {
 
     await newFlatSale.save();
 
+    // Invalidate the in-memory global discount cache so the new discount is used immediately.
+    invalidateGlobalDiscountCache();
+
     if (!newFlatSale) {
       return res.status(400).json({ message: "Unable to make new Sale..." });
     }
@@ -382,19 +408,30 @@ export const createFlatDiscounts = async (req, res) => {
 export const updateFlatDiscount = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isActive, appliedFor, applyDiscount, expiresAt, discountType } =
-      req.body;
+    // Allow both `discountValue` and legacy `applyDiscount` fields from the client.
+    const {
+      isActive,
+      appliedFor,
+      applyDiscount,
+      expiresAt,
+      discountType,
+      discountValue,
+    } = req.body;
+    const valueToSet = discountValue ?? applyDiscount; // Prefer explicit `discountValue` if provided.
     const updatedFlatDiscount = await GlobalDiscount.findByIdAndUpdate(
       id,
       {
         isActive,
         appliedFor,
-        applyDiscount,
         expiresAt,
         discountType,
+        ...(valueToSet !== undefined ? { discountValue: valueToSet } : {}),
       },
       { new: true }
     );
+
+    // Clear cached global discount so updates reflect immediately
+    invalidateGlobalDiscountCache();
 
     if (!updatedFlatDiscount) {
       return res
@@ -419,7 +456,7 @@ export const activateDeactivateDiscount = async (req, res) => {
     const { id } = req.params;
     const { isActive } = req.body;
 
-    if (!isActive) {
+    if (isActive === undefined || isActive === null) {
       return res
         .status(400)
         .json({ message: "Please enter all required Fields..." });
@@ -431,6 +468,9 @@ export const activateDeactivateDiscount = async (req, res) => {
       },
       { new: true }
     );
+
+    // Clear cache when toggling active state
+    invalidateGlobalDiscountCache();
 
     if (!updatedFlatDiscount) {
       return res
@@ -454,6 +494,8 @@ export const removeFlatDiscount = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedDiscount = await GlobalDiscount.findByIdAndDelete(id);
+    // Clear cache after removing discount so changes reflect immediately
+    invalidateGlobalDiscountCache();
 
     if (!deletedDiscount) {
       return res
@@ -469,5 +511,50 @@ export const removeFlatDiscount = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Internal Server Error", data: error });
+  }
+};
+
+export const removeUptoDiscount = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        discountType: "none",
+        discountRate: 0,
+      },
+      { new: true }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Discount Removed Sucessfully", data: product });
+  } catch (error) {
+    console.error(error.message);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", data: error.message });
+  }
+};
+
+export const getAllFlatDiscounts = async (req, res) => {
+  try {
+    const discounts = await GlobalDiscount.find().sort({ createdAt: -1 });
+
+    if (!discounts) {
+      return res
+        .status(404)
+        .json({ message: "No Active Flat Discounts Found..." });
+    }
+
+    return res.status(200).json({
+      message: "Flat Discounts Fetched Successfully...",
+      data: discounts,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error...", data: error.message });
   }
 };
