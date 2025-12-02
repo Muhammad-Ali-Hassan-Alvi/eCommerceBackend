@@ -11,13 +11,15 @@ import {
   deactivateProduct,
   deleteProductPermanently,
   getDeactivatedProducts,
-  activeProduct,
   addUptoDiscount,
   createFlatDiscounts,
   updateFlatDiscount,
   activateDeactivateDiscount,
   removeFlatDiscount,
   createUpdateFeaturedProduct,
+  removeUptoDiscount,
+  activeDeactiveProduct,
+  getAllFlatDiscounts,
 } from "../controllers/productController.js";
 import { upload } from "../config/cloudinary.js";
 
@@ -34,6 +36,12 @@ router.get(
   authorizeRoles("admin"),
   getDeactivatedProducts
 );
+router.get(
+  "/flat-discounts",
+  protect,
+  authorizeRoles("admin"),
+  getAllFlatDiscounts
+);
 
 router.post(
   "/create",
@@ -42,7 +50,12 @@ router.post(
   upload.array("images"),
   createProduct
 );
-router.post("/add-discount/:id", protect, authorizeRoles("admin"), addUptoDiscount);
+router.post(
+  "/add-discount/:id",
+  protect,
+  authorizeRoles("admin"),
+  addUptoDiscount
+);
 router.post(
   "/flat-discount",
   protect,
@@ -51,15 +64,20 @@ router.post(
 );
 
 router.put(
-  "/:id",
+  "/update-product/:id",
   protect,
   authorizeRoles("admin"),
   updateProducts,
   upload.array("images")
 );
-router.put("/:id", protect, authorizeRoles("admin"), activeProduct);
 router.put(
   "/active-deactive-product/:id",
+  protect,
+  authorizeRoles("admin"),
+  activeDeactiveProduct
+);
+router.put(
+  "/active-deactive-flat-discount/:id",
   protect,
   authorizeRoles("admin"),
   activateDeactivateDiscount
@@ -75,6 +93,12 @@ router.put(
   protect,
   authorizeRoles("admin"),
   createUpdateFeaturedProduct
+);
+router.put(
+  "/remove-upto-discount/:id",
+  protect,
+  authorizeRoles("admin"),
+  removeUptoDiscount
 );
 
 router.delete(
@@ -92,7 +116,6 @@ router.delete(
 router.delete(
   "/remove-flat-discount/:id",
   protect,
-  authorizeRoles("admin"),
   removeFlatDiscount
 );
 
